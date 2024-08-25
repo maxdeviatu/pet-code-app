@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "195004064777",
+    "project_id": "vet-code-app",
+    "storage_bucket": "vet-code-app.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:195004064777:android:ad87721461914147a044d8",
+        "android_client_info": {
+          "package_name": "com.sertevetca.dev"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyA2rVBbk6hxGoVVgxvb7RI4W0suY2ordRQ"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
