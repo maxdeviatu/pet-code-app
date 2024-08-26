@@ -3,15 +3,25 @@ import { Image, StyleSheet, TextInput, TouchableOpacity, View, Text, ActivityInd
 import { Camera, CameraView } from 'expo-camera';
 import Svg, { Path } from 'react-native-svg';
 import { db } from '@/firebase';
-import { collection, getDocs, query, where, limit } from 'firebase/firestore';
+import { collection, getDocs, query, where, limit, getDoc, doc } from 'firebase/firestore';
 
 // Tipos
 type PetData = {
   name: string;
-  Age: number;
-  bread: string;
-  phone: string;
-  direction: string;
+  age: number;
+  breed: string;
+  sex: string;
+  species: string;
+  birthDate: Date;
+  owner: {
+    name: string;
+    contactNumber: string;
+    address: string;
+  };
+  deworming: {
+    dewormingName: string;
+    isDeworming: boolean;
+  };
 };
 
 // Componentes de iconos
@@ -32,10 +42,15 @@ const ScanIcon: React.FC = React.memo(() => (
 const PetInfo: React.FC<{ petData: PetData }> = React.memo(({ petData }) => (
   <View style={styles.petInfo}>
     <Text style={styles.petText}>Nombre: {petData.name}</Text>
-    <Text style={styles.petText}>Edad: {petData.Age}</Text>
-    <Text style={styles.petText}>Raza: {petData.bread}</Text>
-    <Text style={styles.petText}>Teléfono: {petData.phone}</Text>
-    <Text style={styles.petText}>Dirección: {petData.direction}</Text>
+    <Text style={styles.petText}>Edad: {petData.age}</Text>
+    <Text style={styles.petText}>Raza: {petData.breed}</Text>
+    <Text style={styles.petText}>Sexo: {petData.sex}</Text>
+    <Text style={styles.petText}>Especie: {petData.species}</Text>
+    <Text style={styles.petText}>Fecha de nacimiento: {petData.birthDate ? petData.birthDate.toLocaleDateString() : 'No disponible'}</Text>
+    <Text style={styles.petText}>Propietario: {petData.owner?.name || 'No disponible'}</Text>
+    <Text style={styles.petText}>Teléfono del Propietario: {petData.owner?.contactNumber || 'No disponible'}</Text>
+    <Text style={styles.petText}>Dirección del Propietario: {petData.owner?.address || 'No disponible'}</Text>
+    {petData.deworming && <Text style={styles.petText}>Desparasitación: {petData.deworming.dewormingName} - {petData.deworming.isDeworming ? 'Sí' : 'No'}</Text>}
   </View>
 ));
 
@@ -65,25 +80,47 @@ export default function HomeScreen() {
     setConnectionStatus("Buscando...");
 
     try {
-      const petsCollection = collection(db, 'pets');
-      const q = query(petsCollection, where('code', '==', parseInt(searchCode)), limit(1));
-      const snapshot = await getDocs(q);
-      
-      if (!snapshot.empty) {
-        const pet = snapshot.docs[0].data() as PetData;
-        setPetData(pet);
-        setConnectionStatus("Mascota encontrada");
-      } else {
-        setConnectionStatus("No se encontró ninguna mascota con el código proporcionado.");
-        setPetData(null);
-      }
+        const petsCollection = collection(db, 'pets');
+        const q = query(petsCollection, where('code', '==', parseInt(searchCode)), limit(1));
+        const snapshot = await getDocs(q);
+        
+        if (!snapshot.empty) {
+            const petDoc = snapshot.docs[0];
+            const petData = petDoc.data() as any;  // Usar 'any' para manejo temporal
+
+            // Convertir birthDate si está presente y es una marca de tiempo
+            const birthDate = petData.birthDate ? petData.birthDate.toDate() : null;
+
+            // Obtener datos del propietario
+            const ownerSnapshot = await getDoc(doc(db, petData.ownerRef.path)); // Asegúrate de que ownerRef es una referencia válida
+            const ownerData = ownerSnapshot.data();
+
+            // Obtener datos de desparasitación
+            const dewormingSnapshot = await getDoc(doc(db, petData.dewormingRef.path)); // Asegúrate de que dewormingRef es una referencia válida
+            const dewormingData = dewormingSnapshot.data();
+
+            // Formar la estructura de datos completa
+            const fullPetData: PetData = {
+                ...petData,
+                birthDate, // Añadir la fecha de nacimiento convertida
+                owner: ownerData,
+                deworming: dewormingData,
+            };
+
+            setPetData(fullPetData);
+            setConnectionStatus("Mascota encontrada");
+        } else {
+            setConnectionStatus("No se encontró ninguna mascota con el código proporcionado.");
+            setPetData(null);
+        }
     } catch (error) {
-      console.error("Error buscando mascota:", error);
-      setConnectionStatus("Error buscando mascota. Revisa la consola para más detalles.");
+        console.error("Error buscando mascota:", error);
+        setConnectionStatus("Error buscando mascota. Revisa la consola para más detalles.");
     } finally {
-      setIsSearching(false);
+        setIsSearching(false);
     }
-  }, []);
+}, []);
+
 
   // Manejador para el escaneo de código de barras
   const handleBarCodeScanned = useCallback(({ data }: { data: string }) => {

@@ -12,23 +12,27 @@ export default function TabLayout() {
     <Tabs
       screenOptions={{
         tabBarActiveTintColor: Colors[colorScheme ?? 'light'].tint,
+        tabBarStyle: {
+          backgroundColor: Colors[colorScheme ?? 'light'].tabBarBackground, // Uso del nuevo color de fondo
+        },
         headerShown: false,
-      }}>
+      }}
+    >
       <Tabs.Screen
         name="index"
         options={{
-          title: 'Home',
+          title: 'Buscar',
           tabBarIcon: ({ color, focused }) => (
-            <TabBarIcon name={focused ? 'home' : 'home-outline'} color={color} />
+            <TabBarIcon name={focused ? 'search' : 'search-outline'} color={color} />
           ),
         }}
       />
       <Tabs.Screen
-        name="explore"
+        name="add"
         options={{
-          title: 'Explore',
+          title: 'Agregar',
           tabBarIcon: ({ color, focused }) => (
-            <TabBarIcon name={focused ? 'code-slash' : 'code-slash-outline'} color={color} />
+            <TabBarIcon name={focused ? 'add-circle' : 'add-circle-outline'} color={color} />
           ),
         }}
       />
